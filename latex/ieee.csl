@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" version="1.0" class="in-text" default-locale="en-US">
+  <info>
+    <title>Simple IEEE-like numeric</title>
+    <id>http://www.zotero.org/styles/simple-ieee-like-numeric</id>
+    <link href="http://www.zotero.org/styles/ieee" rel="template"/>
+    <author>
+      <name>Generated for local use</name>
+    </author>
+    <category citation-format="numeric"/>
+    <category field="engineering"/>
+    <updated>2025-01-01T00:00:00+00:00</updated>
+    <summary>Minimal numeric citation style approximating IEEE; replace with official IEEE CSL for full conformity.</summary>
+  </info>
+  <macro name="author">
+    <names variable="author">
+      <name form="short" and="symbol" delimiter=", " initialize-with="."/>
+      <label form="short" prefix=", " text-case="capitalize-first"/>
+    </names>
+  </macro>
+  <macro name="title">
+    <text variable="title" quotes="true"/>
+  </macro>
+  <macro name="container-title">
+    <text variable="container-title" font-style="italic"/>
+  </macro>
+  <macro name="issued">
+    <date variable="issued">
+      <date-part name="year"/>
+    </date>
+  </macro>
+  <citation collapse="citation-number">
+    <sort>
+      <key variable="citation-number"/>
+    </sort>
+    <layout prefix="[" suffix="]" delimiter=",">
+      <text variable="citation-number"/>
+    </layout>
+  </citation>
+  <bibliography entry-spacing="0" line-spacing="1">
+    <layout hanging-indent="true" delimiter=" ">
+      <text variable="citation-number" prefix="[" suffix="]"/>
+      <text macro="author" suffix=", "/>
+      <text macro="title" suffix=", "/>
+      <text macro="container-title" suffix=", "/>
+      <text macro="issued"/>
+    </layout>
+  </bibliography>
+</style>
+

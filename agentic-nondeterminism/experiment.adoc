@@ -1,0 +1,110 @@
+== Experiment: ChRIS IAS vs Agentic Orchestration
+
+This document consolidates the experimental design and setup for evaluating the paper’s claims on a real system (ChRIS). The goal is to show, empirically, that deterministic orchestration (IAS) collapses the action space while agentic orchestration over the same tool graph carries irreducible, measurable risk.
+
+== Overview
+
+Two orchestration regimes over the same ChRIS deployment:
+
+- **Agentic regime:** An LLM agent constructs workflows by invoking the ChRIS collection+json API (or a thin SDK) to create feeds, add plugins, set parameters, connect nodes, run, and fetch results.
+- **IAS regime:** The LLM can only select a named intent; a deterministic Intent–Action Service compiles each intent into a single, prevalidated ChRIS workflow (one macro-action per intent).
+
+== Intents and Gold Workflows
+
+Pick 2–3 fixed, clinically meaningful intents with validated workflows (gold DAGs):
+
+- stem:[i_1]: “Analyze an MPRAGE dataset and report ventricular volumes.” Gold: ingest DICOM → convert → bias-correct → register → segment → measure → export report.
+- stem:[i_2]: “Perform diffusion tensor imaging (DTI) tractography with QC snapshots.” Gold: ingest → convert → eddy/motion correction → tensor fit → tractography → QC export.
+- Optional stem:[i_3]: “Run fMRI preprocessing and motion/signal QC.”
+
+For each intent, define the gold plugin DAG (nodes/edges) and required parameters (modalities, key thresholds/orientations, outputs). This is the IAS target and the reference for error checking.
+
+== Making Agentic Orchestration Feasible
+
+Pure API probing is unlikely to work; provide scaffolding while preserving structural choice:
+
+- **Tool manifest:** list available plugins, brief descriptions, required inputs, key parameters (types/defaults), exemplar calls.
+- **Client shim:** minimal JS (or Python) wrapper for Cj idioms (create feed, add plugin, set params, connect, run) to reduce syntax errors while leaving plugin/order/param choices open.
+- **Prompt primer:** short description of ChRIS concepts (feeds, nodes, edges), step/time caps, and guardrails.
+
+== Trials
+
+- Per intent, run stem:[N] trials per condition (e.g., N=50–100). Agentic trials vary prompt phrasings and sampling seeds; IAS trials should be invariant.
+- Use fixed datasets to remove data-induced variance; identical timeouts and plugin caps across conditions.
+
+== Instrumentation
+
+Log per trial:
+
+- Full sequence of API/SDK calls with payloads/responses.
+- Constructed plugin DAG (nodes, edges, params).
+- Timing: end-to-end orchestration time; total call count.
+- Outcome: completed, failed (syntactic), failed (structural), completed but clinically invalid.
+- Random seed / prompt variant for reproducibility.
+
+== Error Classification
+
+- **Syntactic/API:** malformed requests, missing required params, wrong types.
+- **Structural:** wrong plugin order, missing mandatory steps, impossible connections, cycles/dead-ends.
+- **Parameter semantic:** wrong modality/unit/orientation; missing or unreasonable thresholds.
+- **Clinical acceptability:** SME review vs gold DAG/param ranges.
+
+== Metrics
+
+- Orchestration success: fraction matching the gold workflow (graph edit distance == 0, params within tolerance).
+- Variation: number of distinct workflows per intent; DAG edit distance distribution vs gold; parameter deviation stats.
+- Error rates by class (syntactic/structural/param/clinical).
+- API surface usage: call counts per trial; branching decisions exercised.
+- Time to completion (or to failure).
+- Branching-factor view: average outgoing choices exercised per step to ground the stem:[d^L] growth used in the paper.
+
+== Estimating Error Probability from Logs
+
+The main paper defines, for a length-stem:[L] workflow, stem:[P_{\text{valid}}(i; L)] and stem:[H_{MCP}(i; L) = 1 - P_{\text{valid}}(i; L)]. Estimate local error rates from logs by counting how often a valid prefix stem:[h_t] leaves the valid set:
+
+[stem]
+++++
+\hat{\varepsilon}_t = \frac{\#\{\text{transitions } h_t \to h_{t+1} \notin R_{t+1}\}}{\#\{\text{transitions } h_t \to h_{t+1} \}} ,
+++++
+
+where stem:[R_t] is the set of prefixes still on track to match the gold workflow. Form an empirical hazard curve:
+
+[stem]
+++++
+\hat{H}_{MCP}(i; L) = 1 - \prod_{t=1}^{L-1} (1 - \hat{\varepsilon}_t) .
+++++
+
+Cruder approximation with an average per-step error stem:[\hat{\varepsilon}]:
+
+[stem]
+++++
+\hat{H}_{MCP}(i; L) \approx 1 - (1 - \hat{\varepsilon})^{L-1} .
+++++
+
+Plot empirical failure fractions against these estimates to show alignment with the theoretical model.
+
+== Outcome Buckets (for reporting)
+
+For each trial, bucket outcomes for consistent reporting and to map to stem:[H_{MCP}] components:
+
+- **A (gold-valid):** matches gold DAG (edit distance == 0) and params within tolerance; clinically acceptable.
+- **B (structurally valid, clinically invalid):** runs to completion with valid graph but fails SME clinical review (e.g., missing QC).
+- **C (structurally invalid):** graph errors (wrong order, missing mandatory step, impossible connection).
+- **D (syntactically invalid):** API/SDK errors, missing/typed params, malformed requests.
+
+Fractions of B/C/D correspond to slices of stem:[\mathcal{S}_{invalid}]; A corresponds to stem:[\mathcal{S}^{\star}_{valid}].
+
+== Analysis Plan
+
+- IAS trials: single-action, zero-variance orchestration (modulo intent mis-selection, if tested).
+- Agentic trials: quantify how failure probability and workflow divergence grow with path length and call count; overlay observed error rates with the theoretical hazard curve and branching-factor estimates.
+- Highlight error modes (missing plugin, wrong order, wrong params, wrong data binding).
+- Present side-by-side: average call count, variance, success rate, and representative DAGs per intent/condition.
+- Report bucket proportions (A–D), DAG edit distance histograms, parameter deviation stats, and stem:[\hat{H}_{MCP}(i; L)] overlays.
+
+== Artifacts to Build
+
+- IAS macro endpoints/buttons for each intent.
+- Tool manifest and minimal SDK shim for agentic access.
+- Logging/inspection harness to reconstruct DAGs and classify errors.
+- Scripts to compute DAG edit distances, parameter deviations, and to bucket errors; plotting scripts for hazard vs observed failure rates.
