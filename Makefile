@@ -11,7 +11,7 @@ COMMON_PANDOC_FLAGS := -V lang=en -V geometry:margin=1in -V fontsize=11pt
 
 .PHONY: all papers clean help
 
-all: paper_research paper_engineering engineering_brief agentic-nondeterminism
+all: paper_research paper_engineering engineering_brief agentic-nondeterminism experiment
 
 papers: all
 
@@ -44,12 +44,14 @@ $(1)-html: $$($(1)_HTML)
 $$($(1)_DOCBOOK): $$($(1)_SRC) | $(BUILD_DIR)
 	asciidoctor $$($(1)_ADOC_ATTRS) -b docbook -o $$@ $$<
 
+ifneq ($$($(1)_SKIP_TEX_RULE),1)
 $$($(1)_TEX): $$($(1)_DOCBOOK) $(LATEX_TEMPLATE) | $(BUILD_DIR)
 	@if command -v pandoc >/dev/null 2>&1; then \
 		pandoc $$< -f docbook -t latex --template=$(LATEX_TEMPLATE) --resource-path=$$($(1)_RESOURCE_PATH) $$($(1)_PANDOC_FLAGS) -o $$@; \
 	else \
 		echo "pandoc not installed; cannot generate $$@"; exit 1; \
 	fi
+endif
 
 $$($(1)_PDF): $$($(1)_TEX) | $(BUILD_DIR)
 	@if command -v $(PDF_ENGINE) >/dev/null 2>&1; then \
@@ -79,13 +81,30 @@ endef
 paper_research_PANDOC_FLAGS := $(COMMON_PANDOC_FLAGS)
 paper_engineering_PANDOC_FLAGS := $(COMMON_PANDOC_FLAGS)
 engineering_brief_PANDOC_FLAGS := $(COMMON_PANDOC_FLAGS)
-agentic-nondeterminism_PANDOC_FLAGS := $(COMMON_PANDOC_FLAGS) -V documentclass=IEEEtran -V classoption=onecolumn
+agentic-nondeterminism_PANDOC_FLAGS := $(COMMON_PANDOC_FLAGS) -V documentclass=IEEEtran -V classoption=onecolumn -V bibliography=agentic-nondeterminism
 agentic-nondeterminism_ADOC_ATTRS := -a data-uri -a allow-uri-read -a stem=latexmath
+agentic-nondeterminism_SKIP_TEX_RULE := 1
+experiment_PANDOC_FLAGS := $(COMMON_PANDOC_FLAGS) -V documentclass=IEEEtran -V classoption=onecolumn
+experiment_ADOC_ATTRS := -a data-uri -a allow-uri-read -a stem=latexmath
 
 $(eval $(call build_document,paper_research,paper-research/main.adoc))
 $(eval $(call build_document,paper_engineering,paper-engineering/main.adoc))
 $(eval $(call build_document,engineering_brief,engineering-brief/main.adoc))
 $(eval $(call build_document,agentic-nondeterminism,agentic-nondeterminism/LLM-to-IAS.adoc))
+$(eval $(call build_document,experiment,agentic-nondeterminism/experiment.adoc))
+
+# Ensure BibTeX database is available in build/ for agentic-nondeterminism
+build/agentic-nondeterminism.bib: agentic-nondeterminism/agentic-nondeterminism.bib | $(BUILD_DIR)
+	cp $< $@
+
+# Override LaTeX build for agentic-nondeterminism to fix escaped citations
+build/agentic-nondeterminism.tex: build/agentic-nondeterminism.xml $(LATEX_TEMPLATE) build/agentic-nondeterminism.bib | $(BUILD_DIR)
+	@if command -v pandoc >/dev/null 2>&1; then \
+		pandoc build/agentic-nondeterminism.xml -f docbook -t latex --template=$(LATEX_TEMPLATE) --resource-path=$(agentic-nondeterminism_RESOURCE_PATH) $(agentic-nondeterminism_PANDOC_FLAGS) -o $@; \
+		agentic-nondeterminism/fix_cites.py $@; \
+	else \
+		echo "pandoc not installed; cannot generate $@"; exit 1; \
+	fi
 
 tectonic-cache:
 	@mkdir -p $(BUILD_DIR)/.tectonic-check
@@ -109,6 +128,7 @@ help:
 	@echo "  paper_engineering           Engineering paper outputs in build/"
 	@echo "  engineering_brief           Brief outputs in build/"
 	@echo "  agentic-nondeterminism      Agentic nondeterminism paper outputs in build/"
+	@echo "  experiment                  ChRIS experiment plan outputs in build/"
 	@echo "  tectonic-cache              Warm/download Tectonic bundle cache"
 	@echo "Variables:"
 	@echo "  PDF_ENGINE=tectonic|pdflatex   PDF engine used for LaTeX compilation"

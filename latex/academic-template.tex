@@ -34,4 +34,9 @@ $endif$
 
 $body$
 
+$if(bibliography)$
+\bibliographystyle{IEEEtran}
+\bibliography{$for(bibliography)$$bibliography$$sep$,$endfor$}
+$endif$
+
 \end{document}
