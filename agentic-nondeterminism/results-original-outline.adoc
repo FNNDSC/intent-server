@@ -1,0 +1,10 @@
+== Experimental Evaluation: A Narrative Outline
+
+The theoretical arguments suggest that agentic orchestration and IAS-based orchestration will behave very differently in practice, particularly in terms of reproducibility and safety. These differences can be tested in a controlled experimental setting.
+
+One can construct a testbed based on an imaging platform where the underlying tools and workflows are well understood. In the agentic condition, the LLM is given access to primitive imaging operations through a tool registry, and workflow specifications corresponding to clinical intents are generated, for example for lesion segmentation, quality control, and result export. The system logs the sequence of tool calls, their parameters, and any errors encountered. By repeating the same intent multiple times, one can measure how frequently the system yields different workflows for the same request, how often required steps are omitted, and how often invalid combinations of tools are attempted.
+
+In the IAS condition, the same LLM receives only one available action at the tool level: the ability to invoke the IAS with a specified intent. The IAS then constructs and executes the workflow deterministically. Repeated trials under this condition should produce identical workflows and, assuming correct IAS specification, no invalid sequences. The only variability should appear in how the LLM renders the intent or maps an input into a small set of available intents, not in the structure of the workflows themselves.
+
+A secondary dimension of the experiment can involve human evaluation. Clinicians or domain experts can be presented with the workflows produced under each condition, without knowing how they were generated, and asked to assess their plausibility, completeness, and safety. If the theory is correct, IAS-generated workflows should be more consistent, more auditable, and easier to trust.
+
