@@ -42,7 +42,7 @@ sequenceDiagram
     CUBE-->>Agent: 200 OK (outputs validated)
 ```
 
-*   **Total Steps ($N$):** $11$ (assuming minimal status polling).
+*   **Total Steps ($N$):** $12$ (assuming minimal status polling; output validation counted as an agent step).
 *   **Branching Choices ($b$):** High ($b \approx 2.5$). The agent must make selections among 1110 PACS matches, choose the correct compute resource name, parse custom argument strings (`exec="recon-all"`, `args="ARGS: -all"`), and correctly interpret status and silent error codes.
 *   **Accumulated Risk:** High. The probability of error compounds at each API call boundary.
 
@@ -121,12 +121,12 @@ $$P_{\text{success, IAS}} = (1 - p_t)$$
 
 Below is a comparison of success probabilities across the three paradigms for varying error rates. We assume a baseline translation error of $p_t = 3\%$ across all models, and compare success for different per-step execution error rates ($p_e$):
 
-| Per-Step Execution Error ($p_e$) | Paradigm A: Raw API ($N=11$) | Paradigm B: Chell ($N=4$) | Paradigm C: IAS ($N=0$) |
+| Per-Step Execution Error ($p_e$) | Paradigm A: Raw API ($N=12$) | Paradigm B: Chell ($N=5$) | Paradigm C: IAS ($N=0$) |
 | :--- | :--- | :--- | :--- |
-| **$1\%$ (Near-perfect)** | $86.8\%$ | $93.2\%$ | **$97.0\%$** |
-| **$2\%$ (Highly reliable)** | $77.7\%$ | $89.5\%$ | **$97.0\%$** |
-| **$5\%$ (Typical LLM)** | $55.2\%$ | $79.0\%$ | **$97.0\%$** |
-| **$10\%$ (Unconstrained)** | $30.4\%$ | $63.7\%$ | **$97.0\%$** |
+| **$1\%$ (Near-perfect)** | $86.0\%$ | $92.2\%$ | **$97.0\%$** |
+| **$2\%$ (Highly reliable)** | $76.1\%$ | $87.7\%$ | **$97.0\%$** |
+| **$5\%$ (Typical LLM)** | $52.4\%$ | $75.1\%$ | **$97.0\%$** |
+| **$10\%$ (Unconstrained)** | $27.4\%$ | $57.3\%$ | **$97.0\%$** |
 
 > [!IMPORTANT]
 > The IAS does have a translation error threshold ($p_t \approx 3\%$), meaning it is not 100% error-free. However, because it eliminates the compounding execution steps ($N=0$), it acts as a **circuit breaker** against the exponential failure curve that dominates multi-step direct API execution.

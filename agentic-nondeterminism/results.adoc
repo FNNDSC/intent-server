@@ -61,20 +61,19 @@ image::assets/images/fig_total_failure.png[Cumulative total failure,align=center
 
 <<<fig-total>>> shows the consequence. Under raw API choreography, cumulative failure probability rises steeply and monotonically with path length; under ChELL it rises more slowly; under IAS the curve is a single point, because the agent takes one action.
 
-A closed-form comparison makes the magnitude concrete. Assuming a common intent-translation error stem:[p_t = 3\%] and independent per-step execution error stem:[p_e]:
+A closed-form comparison makes the magnitude concrete. Assuming a common intent-translation error stem:[p_t = 3\%] and independent per-step execution error stem:[p_e] over the stem:[N = 12] and stem:[N = 5] agent-controlled steps of <<<fig-total>>>, with output validation counted as an agent step in both cases:
 
 [cols="1,1,1,1",options="header"]
 |===
 | Per-step execution error stem:[p_e] | Raw API | ChELL | IAS
-| 1% (near-perfect) | 86.8% | 93.2% | **97.0%**
-| 2% (highly reliable) | 77.7% | 89.5% | **97.0%**
-| 5% (typical) | 55.2% | 79.0% | **97.0%**
-| 10% (unconstrained) | 30.4% | 63.7% | **97.0%**
+| 1% (near-perfect) | 86.0% | 92.2% | **97.0%**
+| 2% (highly reliable) | 76.1% | 87.7% | **97.0%**
+| 5% (typical) | 52.4% | 75.1% | **97.0%**
+| 10% (unconstrained) | 27.4% | 57.3% | **97.0%**
 |===
 
 The IAS column is constant because the agent performs no execution steps. Its residual error is entirely intent-translation error, and it does not compound. This is the practical content of the collapsing-map argument: IAS does not make the agent more reliable, it removes the exponent.
 
-NOTE: The closed-form table above uses stem:[N = 11] and stem:[N = 4] agent-controlled execution steps for raw API and ChELL respectively, while the per-step figures use stem:[N = 12] and stem:[N = 5]. The difference is whether the final output-validation step is counted as agent-controlled. This should be reconciled to a single convention before submission.
 
 === Silence is the dominant failure mode
 
