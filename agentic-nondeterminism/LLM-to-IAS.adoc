@@ -2,6 +2,10 @@
 Author: Rudolph Pienaar
 :doctype: article
 :stem: latexmath
+:stylesheet: latex-paper.css
+:stylesdir: .
+
+
 
 == Abstract
 
@@ -342,7 +346,7 @@ A standard inequality further clarifies how cumulative risk grows. For any non-n
 [stem]
 ++++
 \prod_{t=1}^{L-1} (1 - \varepsilon_t)
-\le e^{-\sum_{t=1}^{L-1} \varepsilon_t} 
+\le e^{-\sum_{t=1}^{L-1} \varepsilon_t}
 ++++
 
 This bounds the all-steps-valid probability from above. Equivalently, it bounds the orchestration error probability from below:
